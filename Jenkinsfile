@@ -17,6 +17,13 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '5'))
     }
     
+    stage('Checkout') {
+    steps {
+        git branch: 'main',
+            url: 'git@github.com:MyoMyintOoCV/clinical-login-app.git',
+            credentialsId: 'jenkins-ssh-key'
+    }
+}
     stages {
         stage('Checkout SCM') {
             steps {
