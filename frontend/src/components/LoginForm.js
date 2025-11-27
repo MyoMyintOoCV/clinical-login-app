@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import './LoginForm.css';
 
 const LoginForm = () => {
@@ -8,8 +7,6 @@ const LoginForm = () => {
     password: '',
     userType: 'doctor'
   });
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setCredentials({
@@ -18,19 +15,10 @@ const LoginForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage('');
-
-    try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', credentials);
-      setMessage(`Login successful! Welcome ${response.data.userType}`);
-    } catch (error) {
-      setMessage('Login failed. Please check your credentials.');
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Login attempted:', credentials);
+    alert(`Login attempted for ${credentials.userType}: ${credentials.username}`);
   };
 
   return (
@@ -80,20 +68,10 @@ const LoginForm = () => {
             </select>
           </div>
           
-          <button 
-            type="submit" 
-            className="btn btn-primary w-100"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
+          <button type="submit" className="btn btn-primary w-100">
+            Login
           </button>
         </form>
-        
-        {message && (
-          <div className={`alert ${message.includes('successful') ? 'alert-success' : 'alert-danger'} mt-3`}>
-            {message}
-          </div>
-        )}
       </div>
     </div>
   );

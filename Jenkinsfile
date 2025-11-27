@@ -7,78 +7,86 @@ pipeline {
     }
     
     environment {
-        DOCKER_REGISTRY = 'clinical-registry'
         APP_VERSION = "${env.BUILD_ID}"
-        NODE_ENV = 'production'
-    }
-    
-    options {
-        timeout(time: 30, unit: 'MINUTES')
-        buildDiscarder(logRotator(numToKeepStr: '5'))
     }
     
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout and Validate') {
             steps {
                 git branch: 'main',
                     credentialsId: 'UMMOO-GIT',
                     url: 'https://github.com/MyoMyintOoCV/clinical-login-app.git'
-            }
-        }
-        
-        stage('Environment Check') {
-            steps {
-                sh '''
-                    echo "=== Environment Verification ==="
-                    echo "Java Version:"
-                    java -version
-                    echo "Maven Version:"
-                    mvn -version
-                    echo "Node Version:"
-                    node --version
-                    echo "NPM Version:"
-                    npm --version
-                    echo "Git Version:"
-                    git --version
-                    echo "Current directory:"
-                    pwd
-                    echo "Workspace contents:"
-                    ls -la
-                '''
-            }
-        }
-        
-        stage('Frontend Build') {
-            steps {
-                dir('frontend') {
+                
+                script {
+                    echo "=== Validating Project Structure ==="
+                    
+                    // Check frontend files
+                    if (fileExists('frontend/package.json')) {
+                        def packageJson = readFile('frontend/package.json').trim()
+                        if (packageJson.isEmpty()) {
+                            error "package.json is empty!"
+                        }
+                        echo "✅ package.json exists and is not empty"
+                    } else {
+                        error "package.json not found in frontend directory!"
+                    }
+                    
+                    // Check backend files
+                    if (fileExists('backend/pom.xml')) {
+                        echo "✅ pom.xml exists"
+                    } else {
+                        error "pom.xml not found in backend directory!"
+                    }
+                    
+                    // List project structure
                     sh '''
-                        echo "=== Frontend Build ==="
-                        echo "Installing dependencies..."
-                        npm install
-                        echo "Building application..."
-                        npm run build
-                        echo "Frontend build completed successfully"
-                        echo "Build directory contents:"
-                        ls -la build/
+                        echo "=== Project Structure ==="
+                        find . -name "*.json" -o -name "*.xml" -o -name "*.java" -o -name "*.js" | head -20
+                        echo ""
+                        echo "=== Frontend Structure ==="
+                        ls -la frontend/ || echo "No frontend directory"
+                        ls -la frontend/src/ || echo "No src directory"
+                        echo ""
+                        echo "=== Backend Structure ==="
+                        ls -la backend/ || echo "No backend directory"
+                        ls -la backend/src/ || echo "No src directory"
                     '''
                 }
             }
         }
         
-        stage('Backend Build') {
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        echo "=== Frontend Build Started ==="
+                        echo "Current directory:"
+                        pwd
+                        echo "package.json content:"
+                        cat package.json
+                        echo ""
+                        echo "Installing dependencies..."
+                        npm install
+                        echo "Building application..."
+                        npm run build
+                        echo "✅ Frontend build completed successfully"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Backend') {
             steps {
                 dir('backend') {
                     sh '''
-                        echo "=== Backend Build ==="
+                        echo "=== Backend Build Started ==="
                         echo "Compiling..."
                         mvn clean compile
                         echo "Running tests..."
                         mvn test
                         echo "Packaging..."
                         mvn package -DskipTests
-                        echo "Backend build completed successfully"
-                        echo "Target directory contents:"
-                        ls -la target/
+                        echo "✅ Backend build completed successfully"
                     '''
                 }
             }
@@ -89,7 +97,7 @@ pipeline {
             }
         }
         
-        stage('Archive Artifacts') {
+        stage('Archive Results') {
             steps {
                 archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
                 archiveArtifacts artifacts: 'frontend/build/**/*', fingerprint: true
@@ -103,10 +111,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo "🎉 Build succeeded!"
+            echo "🎉 SUCCESS: Clinical Login App built successfully!"
         }
         failure {
-            echo "❌ Build failed!"
+            echo "❌ FAILURE: Build failed. Check the logs above for details."
         }
     }
 }
