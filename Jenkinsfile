@@ -17,19 +17,12 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '5'))
     }
     
-    stage('Checkout') {
-    steps {
-        git branch: 'main',
-            url: 'git@github.com:MyoMyintOoCV/clinical-login-app.git',
-            credentialsId: 'jenkins-ssh-key'
-    }
-}
     stages {
         stage('Checkout SCM') {
             steps {
                 git branch: 'main',
-                    credentialsId: 'UMMOO-GIT', // Use your existing credential
-                    url: 'https://github.com/MyoMyintOoCV/clinical-login-app.git' // Your actual repo
+                    credentialsId: 'UMMOO-GIT',
+                    url: 'https://github.com/MyoMyintOoCV/clinical-login-app.git'
             }
         }
         
@@ -47,32 +40,45 @@ pipeline {
                     npm --version
                     echo "Git Version:"
                     git --version
+                    echo "Current directory:"
+                    pwd
+                    echo "Workspace contents:"
+                    ls -la
                 '''
             }
         }
         
-        stage('Frontend Build & Test') {
+        stage('Frontend Build') {
             steps {
                 dir('frontend') {
                     sh '''
                         echo "=== Frontend Build ==="
+                        echo "Installing dependencies..."
                         npm install
+                        echo "Building application..."
                         npm run build
                         echo "Frontend build completed successfully"
+                        echo "Build directory contents:"
+                        ls -la build/
                     '''
                 }
             }
         }
         
-        stage('Backend Build & Test') {
+        stage('Backend Build') {
             steps {
                 dir('backend') {
                     sh '''
                         echo "=== Backend Build ==="
+                        echo "Compiling..."
                         mvn clean compile
+                        echo "Running tests..."
                         mvn test
+                        echo "Packaging..."
                         mvn package -DskipTests
                         echo "Backend build completed successfully"
+                        echo "Target directory contents:"
+                        ls -la target/
                     '''
                 }
             }
