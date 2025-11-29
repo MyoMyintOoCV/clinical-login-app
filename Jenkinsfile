@@ -26,14 +26,14 @@ pipeline {
                         if (packageJson.isEmpty()) {
                             error "package.json is empty!"
                         }
-                        echo "✅ package.json exists and is not empty"
+                        echo "package.json exists and is not empty"
                     } else {
                         error "package.json not found in frontend directory!"
                     }
                     
                     // Check backend files
                     if (fileExists('backend/pom.xml')) {
-                        echo "✅ pom.xml exists"
+                        echo "pom.xml exists"
                     } else {
                         error "pom.xml not found in backend directory!"
                     }
@@ -56,7 +56,7 @@ pipeline {
                         npm install
                         echo "Building application..."
                         npm run build
-                        echo "✅ Frontend build completed successfully"
+                        echo "Frontend build completed successfully"
                     '''
                 }
             }
@@ -70,7 +70,7 @@ pipeline {
                         echo "Compiling main source code..."
                         # Use compile-only goal that doesn't compile tests
                         mvn compile -q
-                        echo "✅ Backend compilation successful"
+                        echo "Backend compilation successful"
                     '''
                 }
             }
@@ -83,7 +83,7 @@ pipeline {
                         echo "=== Backend Packaging ==="
                         echo "Packaging application (skipping tests)..."
                         mvn package -DskipTests -q
-                        echo "✅ Backend packaging successful"
+                        echo "Backend packaging successful"
                         
                         echo "Generated JAR file:"
                         ls -la target/*.jar
@@ -114,10 +114,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo "🎉 SUCCESS: Clinical Login App built successfully!"
+            echo "SUCCESS: Clinical Login App built successfully!"
         }
         failure {
-            echo "❌ FAILURE: Build failed. Check the logs above for details."
+            echo "FAILURE: Build failed. Check the logs above for details."
         }
     }
 }
